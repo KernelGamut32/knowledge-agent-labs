@@ -38,11 +38,12 @@ try
     {
         if (endpoint.Scheme != "http" || !endpoint.IsLoopback)
             throw new InvalidOperationException("Local.Endpoint must use HTTP on this computer's loopback address.");
-        // Foundry's runtime ID varies by hardware. Discover the one loaded model.
+        // Foundry's runtime ID varies by hardware. Discover the loaded model from the OpenAI API.
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        var loaded = await http.GetFromJsonAsync<string[]>(new Uri(endpoint, "/openai/loadedmodels")) ?? [];
+        var modelList = await http.GetFromJsonAsync<LocalModelList>(new Uri(endpoint, "models"));
+        var loaded = modelList?.Data.Select(item => item.Id).ToArray() ?? [];
         if (loaded.Length != 1)
-            throw new InvalidOperationException($"Found {loaded.Length} loaded models. Load exactly one tool-capable model with foundry model load qwen2.5-0.5b; unload other models first.");
+            throw new InvalidOperationException($"Found {loaded.Length} loaded models. Keep exactly one tool-capable model loaded; use foundry model list --loaded and unload extras by runtime ID.");
         model = loaded[0];
         key = "not-needed"; // The local server does not need an Azure key.
     }
@@ -195,3 +196,5 @@ static string ReadFile(string name) => File.ReadAllText(Path.Combine(AppContext.
 record AppSettings(string Provider, LocalSettings Local, AzureSettings Azure);
 record LocalSettings(string Endpoint);
 record AzureSettings(string Endpoint, string Deployment);
+record LocalModelList(LocalModel[] Data);
+record LocalModel(string Id);
