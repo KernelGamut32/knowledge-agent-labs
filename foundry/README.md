@@ -58,6 +58,7 @@ Restarting affects models in that local server. Finish any other local Foundry w
 Extract this updated package into a fresh folder and open a terminal in the `Foundry_Local_Simple_Agent` folder. Then run:
 
 ```powershell
+cd App
 dotnet restore
 dotnet run -- --show-knowledge
 dotnet run
